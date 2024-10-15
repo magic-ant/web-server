@@ -1,0 +1,9 @@
+#ifndef SERVER_STATUS_H
+#define SERVER_STATUS_H
+
+
+#define STATUS_FAILUER -1
+#define STATUS_SUCCESS 0
+
+
+#endif //SERVER_STATUS_H
