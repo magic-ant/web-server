@@ -48,7 +48,7 @@ int init_socket(char *ip, char *port, int backlog){
 
 int set_events(int fd, int events, enum event_opt_t opt){
  struct epoll_event ev;
- ev.data.fd = fd;
+ ev.data.ptr = &connlist[fd];
  ev.events = events;
  if(ADD_EVENT == opt){
    if(-1 == epoll_ctl(epfd, EPOLL_CTL_ADD, fd, &ev)){
@@ -176,13 +176,13 @@ int main(int args, char** argv){
       EXIT_FAILURE;
     }
     for(int i = 0; i < nready; ++i){
-      int ev_fd = evs[i].data.fd;
+      con_item* con_ptr = (con_item*)evs[i].data.ptr;
       if(evs[i].events & EPOLLIN){
-        connlist[ev_fd].recv_t.recv_cb(ev_fd);
+        con_ptr->recv_t.recv_cb(con_ptr->fd);
       }else if(evs[i].events & EPOLLOUT){
-        connlist[ev_fd].send_cb(ev_fd);
+        con_ptr->send_cb(con_ptr->fd);
       }else{
-        LOG_WARN("epoll return socket %d status: %#X", ev_fd, evs[i].events);
+        LOG_WARN("epoll return socket %d status: %#X", con_ptr->fd, evs[i].events);
       }
     }
   }

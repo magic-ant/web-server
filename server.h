@@ -9,7 +9,7 @@
 #define MAX_CONNECTIONS 1024
 #define BACKLOG 128
 
-typedef int (*RECALLBACK)(int);
+typedef int (*RECALLBACK)();
 
 int init_socket(char* ip, char* port, int backlog);
 int accept_cb(int fd);
