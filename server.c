@@ -11,6 +11,7 @@
 #include "server.h"
 #include "logger.h"
 #include "status.h"
+#include "http.h"
 
 con_item connlist[MAX_CONNECTIONS] = {0};
 int epfd = -1;
@@ -104,16 +105,12 @@ int send_cb(int fd){
   }
   LOG_INFO("socket %d send %d bytes data successfully", fd, nbytes);
   set_events(fd, EPOLLIN, MOD_EVENT);
-  if(connlist[fd].wlen >= BUFFER_SIZE){
-    memset(connlist[fd].wbuffer, 0, BUFFER_SIZE);
-    connlist[fd].wlen = 0;
-  }
   return nbytes;
 }
 
 
 int recv_cb(int fd){
-  int nbytes = recv(fd, connlist[fd].rbuffer + connlist[fd].rlen, BUFFER_SIZE - connlist[fd].rlen, 0);
+  int nbytes = recv(fd, connlist[fd].rbuffer, BUFFER_SIZE, 0);
   if(0 == nbytes){
     LOG_INFO("socket %d disclose, %s:%d", fd, connlist[fd].ip, connlist[fd].port);
     set_events(fd, EPOLLIN, DEL_EVENT);
@@ -124,14 +121,11 @@ int recv_cb(int fd){
     LOG_ERROR("socket %d recv data from %s:%d failure, error[%d]: %s", fd, connlist[fd].ip, connlist[fd].port, errno, strerror(errno));
     return STATUS_FAILUER;
   }else{
-    LOG_INFO("socket %d recv %d bytes: [%s] from %s:%d", fd, nbytes, connlist[fd].rbuffer + connlist[fd].rlen, \
-              connlist[fd].ip, connlist[fd].port);
-    memcpy(connlist[fd].wbuffer + connlist[fd].wlen, connlist[fd].rbuffer + connlist[fd].rlen, nbytes);
+    LOG_INFO("socket %d recv %d bytes from %s:%d\n%s", fd, nbytes, connlist[fd].ip, connlist[fd].port, connlist[fd].rbuffer);
     connlist[fd].rlen += nbytes;
-    connlist[fd].wlen += nbytes;
-    if(connlist[fd].rlen >= BUFFER_SIZE){
-      memset(connlist[fd].rbuffer, 0, BUFFER_SIZE);
-      connlist[fd].rlen = 0;
+    if(STATUS_FAILUER == http_response(&connlist[fd])){
+     LOG_ERROR("http handle error");
+     return STATUS_FAILUER;
     }
     set_events(fd, EPOLLOUT, MOD_EVENT);
     return nbytes;

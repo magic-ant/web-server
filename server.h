@@ -2,7 +2,7 @@
 #define WEB_SERVER_H
 #include <stdio.h>
 
-#define LOG_LEVEL LOG_LEVEL_DEBUG
+#define LOG_LEVEL -1
 
 #define BUFFER_SIZE 1024
 #define EPOLLFD_SIZE 1024
@@ -46,5 +46,7 @@ typedef struct con_item_t{
 
 }con_item;
 
+int server_create(int fd);
+int server_wait(int fd);
 
 #endif //WEB_SERVER_H
